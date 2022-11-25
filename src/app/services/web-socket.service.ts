@@ -3,6 +3,7 @@ import { WebSocketChat } from '../models/web-socket-chat.model';
 
 import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
+import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,8 +13,12 @@ export class WebSocketService {
   websocketMessage: WebSocketChat[] = [];
   message: string = '';
 
-  constructor() {
-    console.log('loaded');
+  getGroupsOfUser(fakeToken: string): string[] {
+    return [
+      '3fa85f64-5717-4562-b3fc-2c963f66afa9',
+      'af385f64-5717-4562-b3fc-2c963f66afa4',
+      'be3a5572-5717-4562-b3fc-2c963f66a4fc',
+    ];
   }
 
   openWebSocketConnection() {
@@ -22,6 +27,21 @@ export class WebSocketService {
     const _this = this;
     this.stompClient.connect({}, function (frame: any) {
       console.log('Connected: ' + frame);
+
+      const groups = _this.getGroupsOfUser('faketoken123');
+
+      groups.forEach((group) => {
+        console.log('group subscirbing: ' + group);
+
+        _this.stompClient.subscribe(
+          `/topic/group/${group}`,
+          function (hello: any) {
+            console.log(JSON.parse(hello.body));
+            _this.showMessage(JSON.parse(hello.body));
+          }
+        );
+      });
+
       _this.stompClient.subscribe(
         '/topic/user/3fa85f64-5717-4562-b3fc-2c963f66afa6',
         function (hello: any) {
@@ -29,14 +49,6 @@ export class WebSocketService {
           _this.showMessage(JSON.parse(hello.body));
         }
       );
-      _this.stompClient.subscribe(
-        '/topic/group/3fa85f64-5717-4562-b3fc-2c963f66afa9',
-        function (hello: any) {
-          console.log(JSON.parse(hello.body));
-          _this.showMessage(JSON.parse(hello.body));
-        }
-      );
-
     });
   }
 
